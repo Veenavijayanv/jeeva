@@ -1,0 +1,132 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.IO;
+using System.Data.OracleClient;
+using System.Web.UI.WebControls;
+
+namespace MaSales.Meeting_minutes
+{
+    public partial class attach_minutes : System.Web.UI.Page
+    {
+        static OracleConnection conn = null;
+        static OracleCommand cmnd = new OracleCommand();
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!Page.IsPostBack)
+            {
+                try
+
+                {
+
+                    //use your own userid,password and datasorce
+                    string constr = "User Id=mana0809;Password=mana0809;Data Source=UATDBNW";
+                    conn = new OracleConnection(constr);
+                    conn.Open();
+
+                    OracleCommand cmnd = conn.CreateCommand();
+
+                    cmnd.CommandText = "CREATE TABLE TBL_ATTACH_MINUTES(MEETING_ID INT PRIMARY KEY,ATTACHMENT BLOB)";
+
+                    cmnd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+
+                {
+
+                    Console.WriteLine(ex.Message);
+
+                }
+            }
+        }
+
+
+
+
+        protected void Upload(object sender, EventArgs e)
+        {
+            //use filestream object to read the image.
+
+            //read to the full length of image to a byte array.
+
+            //add this byte as an oracle parameter and insert it into database.
+
+            try
+
+            {
+                string imagename = @"d:\test\" + Path.GetFileName(FileUpload1.PostedFile.FileName);
+                //proceed only when the image has a valid path
+
+                if (imagename != "")
+
+                {
+
+                    FileStream fls;
+
+                    fls = new FileStream(@imagename, FileMode.Open, FileAccess.Read);
+
+                    //a byte array to read the image
+
+                    byte[] blob = new byte[fls.Length];
+
+                    fls.Read(blob, 0, System.Convert.ToInt32(fls.Length));
+
+                    fls.Close();
+
+                    //open the database using odp.net and insert the data
+
+                    string constr = "User Id=mana0809;Password=mana0809;Data Source=UATDBNW";
+                    conn = new OracleConnection(constr);
+
+                    conn.Open();
+                    Label1.Text = "open";
+
+                    OracleCommand cmnd;
+
+                    string query;
+
+                    query = "insert into TBL_ATTACH_MINUTES(meeting_id,attachment) values(" + "seq_crf.nextval" + "," + " :BlobParameter )";
+
+                    //insert the byte as oracle parameter of type blob
+
+                    OracleParameter blobParameter = new OracleParameter();
+
+                    blobParameter.OracleType = OracleType.Blob;
+
+                    blobParameter.ParameterName = "BlobParameter";
+
+                    blobParameter.Value = blob;
+
+                    cmnd = new OracleCommand(query, conn);
+
+                    cmnd.Parameters.Add(blobParameter);
+
+                    cmnd.ExecuteNonQuery();
+
+                    //Label1.Text = "added to blob field";
+
+                    cmnd.Dispose();
+
+                    conn.Close();
+
+                    conn.Dispose();
+
+                }
+            }
+            catch (Exception ex)
+
+            {
+
+                Console.WriteLine(ex.Message);
+
+            }
+        }
+    }
+}
+
+
+
+
+
